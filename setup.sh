@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 brews=(
-  android-platform-tools
   archey
   aws-shell
   cheat
@@ -41,7 +40,6 @@ brews=(
   python3
   scala
   sbt
-  stormssh
   thefuck
   tmux
   tree
@@ -80,20 +78,11 @@ casks=(
   quicklook-json
   quicklook-csv
   macdown
-  microsoft-office
-  plex-home-theater
-  plex-media-server
   private-eye
   satellite-eyes
-  sidekick
-  skype
   slack
-  sling
   spotify
   steam
-  teleport
-  transmission
-  transmission-remote-gui
   tunnelbear
   vlc
   volumemixer
@@ -127,7 +116,7 @@ clibs=(
 bkpgs=(
 )
 
-gpg_key='3E219504'
+gpg_key='12F902C5C6906E5E'
 git_configs=(
   "branch.autoSetupRebase always"
   "color.ui auto"
@@ -140,8 +129,8 @@ git_configs=(
   "rebase.autostash true"
   "rerere.autoUpdate true"
   "rerere.enabled true"
-  "user.name pathikrit"
-  "user.email pathikritbhowmick@msn.com"
+  "user.name keithkurson"
+  "user.email keith@keithkurson.net"
   "user.signingkey ${gpg_key}"
 )
 
