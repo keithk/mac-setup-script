@@ -128,6 +128,8 @@ git_configs=(
   "push.default simple"
   "rebase.autostash true"
   "rerere.autoUpdate true"
+  "core.whitespace trailing-space,space-before-tab"
+  "apply.whitespace fix"
   "rerere.enabled true"
   "user.name keithkurson"
   "user.email keith@keithkurson.net"
