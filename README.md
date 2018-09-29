@@ -1,5 +1,5 @@
-Dead simple script to setup my new Mac:
+Script to set up my new mac with fish shell + all the other things I need to get off the ground:
 
 ```shell
-curl -sL https://raw.githubusercontent.com/pathikrit/mac-setup-script/master/setup.sh | sh
+curl -sL https://raw.githubusercontent.com/keithk/mac-setup-script/master/setup.sh | sh
 ```

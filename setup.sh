@@ -22,7 +22,6 @@ brews=(
   httpie
   iftop
   imagemagick
-  lighttpd
   lnav
   lumen
   mackup
@@ -34,7 +33,6 @@ brews=(
   nmap
   node --with-full-icu
   poppler
-  postgresql
   pgcli
   python
   python3
@@ -45,56 +43,26 @@ brews=(
   tree
   trash
   wget
+  composer
 )
 
 casks=(
-  adobe-reader
-  airdroid
-  atom
-  betterzipql
-  cakebrew
-  cleanmymac
-  commander-one
-  datagrip
+  code
   docker
-  dropbox
+  visual-studio-code
   firefox
-  geekbench
   google-chrome
   google-drive
-  github-desktop
+  tower
   hosts
-  handbrake
-  intellij-idea
-  istat-menus
-  istat-server  
-  launchrocket
-  licecap
-  lumen
   iterm2
-  qlcolorcode
-  qlmarkdown
-  qlstephen
-  quicklook-json
-  quicklook-csv
-  macdown
-  private-eye
-  satellite-eyes
   slack
   spotify
   steam
   tunnelbear
+  tor
+  insomnia
   vlc
-  volumemixer
-  webstorm
-  xquartz
-)
-
-pips=(
-  pip
-  glances
-  ohmu
-  pythonpy
 )
 
 gems=(
@@ -106,7 +74,6 @@ npms=(
   gitjk
   kill-tabs
   n
-  nuclide-installer
 )
 
 clibs=(
@@ -136,21 +103,14 @@ git_configs=(
   "user.signingkey ${gpg_key}"
 )
 
-apms=(
-  atom-beautify
-  circle-ci
-  ensime
-  intellij-idea-keymap
-  language-scala
-  minimap
-)
-
 fonts=(
   font-source-code-pro
 )
 
 omfs=(
   jacaetevha
+  composer
+  fish-spec
   osx
   thefuck
 )
@@ -226,7 +186,6 @@ install 'gem install' ${gems[@]}
 install 'clib install' ${clibs[@]}
 install 'bpkg install' ${bpkgs[@]}
 install 'npm install --global' ${npms[@]}
-install 'apm install' ${apms[@]}
 install 'brew cask install' ${fonts[@]}
 
 echo "Upgrading bash ..."
@@ -374,14 +333,18 @@ brew install fish --HEAD
         fisher z bass
       fi
 
-      read -p "Install Budspencer Theme for the Fish Shell ? (y/n) " -n 1 answere
+      read -p "Install bobthefish Theme for the Fish Shell ? (y/n) " -n 1 answere
       echo
       if [[ $answere == "y" || $answere == "Y" ]]; then
         brew install --with-default-names gnu-sed
-        fisher omf/theme-budspencer
-        set -U budspencer_nogreeting
+        brew cask install font-hack-nerd-font
+        omf install bobthefish
         set -U fish_key_bindings fish_vi_key_bindings
+        set -g theme_nerd_fonts yes
         fish_update_completions
+        # Copy our config
+        cp configs/config.fish ~/.config/fish/config.fish
+        cp configs/.fish_aliases ~/.fish_aliases
       fi
     fi
 fi
