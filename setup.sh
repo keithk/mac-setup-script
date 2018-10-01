@@ -104,8 +104,21 @@ git_configs=(
   "user.signingkey ${gpg_key}"
 )
 
+vscode=(
+  WallabyJs.quokka-vscode
+  CoenraadS.bracket-pair-colorizer
+  oderwat.indent-rainbow
+  xabikos.JavaScriptSnippets
+  EQuimper.react-native-react-redux
+  wix.vscode-import-cost
+  SirTori.indenticator
+  dracula-theme.theme-dracula
+)
+
+
 fonts=(
   font-source-code-pro
+  font-fira-code
 )
 
 omfs=(
@@ -186,6 +199,7 @@ install 'pip install --upgrade' ${pips[@]}
 install 'gem install' ${gems[@]}
 install 'clib install' ${clibs[@]}
 install 'bpkg install' ${bpkgs[@]}
+install 'code --install-extension' "${vscode[@]}"
 install 'npm install --global' ${npms[@]}
 install 'brew cask install' ${fonts[@]}
 
