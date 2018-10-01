@@ -57,6 +57,7 @@ casks=(
   hosts
   iterm2
   slack
+  sketch
   spotify
   steam
   tunnelbear
