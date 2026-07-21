@@ -1,0 +1,8 @@
+# Browsers module — skip on machines where IT manages browser installs.
+# setup.sh sets Zen as the default browser when this module is selected.
+
+brew "defaultbrowser"
+
+cask "firefox"
+cask "google-chrome"
+cask "zen"

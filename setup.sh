@@ -1,20 +1,78 @@
 #!/usr/bin/env bash
 #
-# Mac setup: Homebrew + Brewfile, oh-my-zsh + spaceship prompt, mise, git config.
+# Mac setup: Homebrew + modular Brewfiles, oh-my-zsh + spaceship prompt, mise, git config.
 # Safe to re-run — every step is idempotent.
 #
+# Core (shell, git, CLI essentials) installs on every machine. Everything else
+# is an opt-in module. Bare `./setup.sh` prompts for each module interactively;
+# pass module flags to skip the prompts for scripted / unattended re-runs.
+#
 # Usage:
-#   ./setup.sh              # core setup (work machines)
-#   ./setup.sh --personal   # core + personal apps (Discord, Steam, ...)
+#   ./setup.sh                     # interactive — prompts for each module
+#   ./setup.sh --core              # core only, no prompts
+#   ./setup.sh --dev --browsers    # core + named modules, no prompts
+#   ./setup.sh --all               # core + every module, no prompts
+#
+# Modules: --dev --web-local --browsers --containers --apps --personal
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+usage() {
+  sed -n '3,17p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+}
+
+# Module toggles. Interactive by default; any selection flag switches to
+# non-interactive and installs exactly what was named (plus core).
+DEV=false
+WEB_LOCAL=false
+BROWSERS=false
+CONTAINERS=false
+APPS=false
 PERSONAL=false
-[[ "${1:-}" == "--personal" ]] && PERSONAL=true
+INTERACTIVE=true
+
+for arg in "$@"; do
+  case "$arg" in
+    --all|-y|--yes)
+      DEV=true; WEB_LOCAL=true; BROWSERS=true; CONTAINERS=true; APPS=true; PERSONAL=true
+      INTERACTIVE=false ;;
+    --core)       INTERACTIVE=false ;;
+    --dev)        DEV=true;        INTERACTIVE=false ;;
+    --web-local)  WEB_LOCAL=true;  INTERACTIVE=false ;;
+    --browsers)   BROWSERS=true;   INTERACTIVE=false ;;
+    --containers) CONTAINERS=true; INTERACTIVE=false ;;
+    --apps)       APPS=true;       INTERACTIVE=false ;;
+    --personal)   PERSONAL=true;   INTERACTIVE=false ;;
+    -h|--help)    usage; exit 0 ;;
+    *) echo "Unknown option: $arg"; echo; usage; exit 1 ;;
+  esac
+done
 
 step() { printf '\n\033[1;34m==> %s\033[0m\n' "$1"; }
+
+# confirm "question" default(true=yes|false=no) — empty answer takes the default
+confirm() {
+  local q="$1" def="$2" reply hint
+  $def && hint="[Y/n]" || hint="[y/N]"
+  read -rp "$q $hint " reply || true
+  case "$reply" in
+    [Yy]*) return 0 ;;
+    [Nn]*) return 1 ;;
+    *) $def ;;
+  esac
+}
+
+if $INTERACTIVE; then
+  step "Choose modules"
+  if confirm "Dev tools (node/bun/python, editors, media)?"       true;  then DEV=true;        fi
+  if confirm "Subeta/Laravel local stack (Herd, DB, caddy)?"      false; then WEB_LOCAL=true;  fi
+  if confirm "Browsers (Firefox, Chrome, Zen)?"                   false; then BROWSERS=true;   fi
+  if confirm "Docker Desktop?"                                    false; then CONTAINERS=true; fi
+  if confirm "GUI apps (Notion, Slack, Figma, Obsidian, ...)?"     true;  then APPS=true;       fi
+  if confirm "Personal apps (Discord, Steam, ...)?"               false; then PERSONAL=true;   fi
+fi
 
 step "Xcode Command Line Tools"
 if ! xcode-select -p &>/dev/null; then
@@ -29,12 +87,20 @@ if ! command -v brew &>/dev/null; then
 fi
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-step "Packages and apps (brew bundle)"
+step "Core packages and apps (brew bundle)"
 brew bundle --file="$REPO_DIR/Brewfile"
-if $PERSONAL; then
-  step "Personal packages and apps"
-  brew bundle --file="$REPO_DIR/Brewfile.personal"
-fi
+
+bundle_module() {  # label file
+  step "$1"
+  brew bundle --file="$REPO_DIR/$2"
+}
+
+if $DEV;        then bundle_module "Dev tools"                "Brewfile.dev";        fi
+if $WEB_LOCAL;  then bundle_module "Subeta/Laravel local stack" "Brewfile.web-local"; fi
+if $BROWSERS;   then bundle_module "Browsers"                 "Brewfile.browsers";   fi
+if $CONTAINERS; then bundle_module "Containers"              "Brewfile.containers"; fi
+if $APPS;       then bundle_module "GUI apps"                 "Brewfile.apps";       fi
+if $PERSONAL;   then bundle_module "Personal apps"           "Brewfile.personal";   fi
 
 step "oh-my-zsh"
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
@@ -60,13 +126,17 @@ done
 # Machine-specific config and secrets go here, never in the repo
 touch "$HOME/.zshrc.local"
 
-step "Runtimes (mise)"
-mise use --global node@lts bun@latest
+if $DEV; then
+  step "Runtimes (mise)"
+  mise use --global node@lts bun@latest python@latest
+fi
 
-step "Default browser"
-if ! defaultbrowser | grep -q '^\* *zen'; then
-  # macOS pops a confirmation dialog — click "Use Zen"
-  defaultbrowser zen
+if $BROWSERS; then
+  step "Default browser"
+  if command -v defaultbrowser &>/dev/null && ! defaultbrowser | grep -q '^\* *zen'; then
+    # macOS pops a confirmation dialog — click "Use Zen"
+    defaultbrowser zen
+  fi
 fi
 
 step "Git config"

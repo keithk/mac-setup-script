@@ -1,0 +1,5 @@
+# Containers module — Docker Desktop and its VS Code integration.
+
+cask "docker-desktop"
+
+vscode "ms-azuretools.vscode-containers"

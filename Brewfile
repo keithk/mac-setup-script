@@ -1,71 +1,27 @@
-# Core Brewfile — installs on every machine (work + personal).
+# Core Brewfile — installs on every machine.
+# Shell, git, and CLI quality-of-life. Everything else lives in a module
+# Brewfile (Brewfile.dev, Brewfile.web-local, ...) and is opt-in via setup.sh.
 # Run via: brew bundle --file=Brewfile
 
 # CLI tools
-brew "awscli"
-brew "caddy"
 brew "coreutils"
-brew "defaultbrowser"
-brew "dnsmasq"
-brew "ffmpeg"
 brew "fzf"
 brew "gh"
 brew "git"
 brew "git-lfs"
-brew "graphviz"
 brew "htop"
-brew "imagemagick"
 brew "jq"
 brew "mise"          # one version manager for node/bun/python/ruby
-brew "mkcert"
-brew "mydumper"
-brew "mysql-client"
-brew "pnpm"
-brew "poppler"
 brew "tmux"
 brew "tree"
-brew "valkey"
 brew "wget"
 brew "yq"
 
 # Apps
 cask "1password"
 cask "claude"
-cask "dbngin"
-cask "docker-desktop"
-cask "figma"
-cask "firefox"
-cask "google-chrome"
-cask "herd"
 cask "iterm2"
-cask "ngrok"
-cask "notion"
-cask "obsidian"
-cask "postman"
 cask "raycast"
-cask "slack"
-cask "tableplus"
-cask "tailscale-app"
-cask "the-unarchiver"
-cask "tower"
-cask "visual-studio-code"
-cask "zed"
-cask "zen"
-cask "zoom"
 
 # Fonts
 cask "font-inconsolata-nerd-font"
-
-# VS Code extensions
-vscode "anthropic.claude-code"
-vscode "astro-build.astro-vscode"
-vscode "catppuccin.catppuccin-vsc"
-vscode "catppuccin.catppuccin-vsc-icons"
-vscode "catppuccin.catppuccin-vsc-pack"
-vscode "davidanson.vscode-markdownlint"
-vscode "github.copilot"
-vscode "github.copilot-chat"
-vscode "ms-azuretools.vscode-containers"
-vscode "robbowen.synthwave-vscode"
-vscode "rust-lang.rust-analyzer"
-vscode "vue.volar"

@@ -1,0 +1,11 @@
+# Apps module — GUI productivity apps. Skip the ones IT already installs
+# for you (Slack, Zoom) on managed machines.
+
+cask "figma"
+cask "notion"
+cask "obsidian"
+cask "slack"
+cask "tailscale-app"
+cask "the-unarchiver"
+cask "tower"
+cask "zoom"

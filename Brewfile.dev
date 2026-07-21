@@ -1,0 +1,28 @@
+# Dev module — node/bun/python work, editors, and media tooling.
+# Cross-machine: install on any machine you write code on.
+# setup.sh also configures mise runtimes (node/bun/python) when this is selected.
+
+# CLI tools
+brew "awscli"
+brew "ffmpeg"
+brew "graphviz"
+brew "imagemagick"
+brew "pnpm"
+brew "poppler"
+
+# Apps
+cask "visual-studio-code"
+cask "zed"
+
+# VS Code extensions
+vscode "anthropic.claude-code"
+vscode "astro-build.astro-vscode"
+vscode "catppuccin.catppuccin-vsc"
+vscode "catppuccin.catppuccin-vsc-icons"
+vscode "catppuccin.catppuccin-vsc-pack"
+vscode "davidanson.vscode-markdownlint"
+vscode "github.copilot"
+vscode "github.copilot-chat"
+vscode "robbowen.synthwave-vscode"
+vscode "rust-lang.rust-analyzer"
+vscode "vue.volar"

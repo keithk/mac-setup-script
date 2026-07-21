@@ -1,0 +1,19 @@
+# Web-local module — Laravel Herd local-dev stack + Subeta's data tooling.
+# Only needed on machines that run Subeta (or other PHP/Laravel local dev).
+
+# Herd local-dev web stack
+brew "caddy"
+brew "dnsmasq"
+brew "mkcert"
+
+# Data tooling
+brew "mydumper"
+brew "mysql-client"
+brew "valkey"
+
+# Apps
+cask "dbngin"
+cask "herd"
+cask "ngrok"
+cask "postman"
+cask "tableplus"
