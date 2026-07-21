@@ -1,0 +1,22 @@
+# oh-my-zsh
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="spaceship"
+plugins=(git last-working-dir)
+source "$ZSH/oh-my-zsh.sh"
+
+# mise — one version manager for node/bun/python/ruby
+eval "$(mise activate zsh)"
+
+# Aliases
+alias l="ls -alF"
+alias g="git"
+alias flushd='sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder && echo "DNS cache flushed"'
+alias claude-unsafe="claude --dangerously-skip-permissions"
+
+function killport {
+	echo '🚨 Killing all processes at port' $1
+	lsof -ti tcp:$1 | xargs kill
+}
+
+# Machine-specific config, PATH additions, and secrets live here — never in git
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"

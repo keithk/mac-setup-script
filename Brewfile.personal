@@ -1,0 +1,16 @@
+# Personal machines only — installed when setup.sh is run with --personal.
+
+# Deploy/hosting CLIs for personal projects
+brew "doctl"
+brew "flyctl"
+brew "railway"
+
+# Misc
+brew "gcalcli"
+brew "gemini-cli"
+
+# Apps
+cask "beeper"
+cask "discord"
+cask "hyper"
+cask "steam"

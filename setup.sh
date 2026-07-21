@@ -1,395 +1,94 @@
 #!/usr/bin/env bash
+#
+# Mac setup: Homebrew + Brewfile, oh-my-zsh + spaceship prompt, mise, git config.
+# Safe to re-run — every step is idempotent.
+#
+# Usage:
+#   ./setup.sh              # core setup (work machines)
+#   ./setup.sh --personal   # core + personal apps (Discord, Steam, ...)
 
-brews=(
-  archey
-  aws-shell
-  cheat
-  clib
-  coreutils
-  dfc
-  findutils
-  fontconfig --universal
-  fpp
-  fzf
-  git
-  git-extras
-  git-lfs
-  gnuplot --with-qt
-  go
-  gpg
-  hh
-  htop
-  httpie
-  iftop
-  imagemagick
-  lnav
-  lumen
-  mackup
-  macvim
-  mas
-  micro
-  mtr
-  ncdu
-  nmap
-  node --with-full-icu
-  poppler
-  pgcli
-  python
-  python3
-  scala
-  sbt
-  thefuck
-  tmux
-  tree
-  trash
-  wget
-  composer
-)
+set -euo pipefail
 
-casks=(
-  code
-  docker
-  visual-studio-code
-  firefox
-  google-chrome
-  google-drive
-  tower
-  hosts
-  iterm2
-  slack
-  sketch
-  spotify
-  steam
-  tunnelbear
-  tor
-  insomnia
-  vlc
-)
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-gems=(
-  bundle
-)
+PERSONAL=false
+[[ "${1:-}" == "--personal" ]] && PERSONAL=true
 
-npms=(
-  fenix-cli
-  gitjk
-  kill-tabs
-  n
-)
+step() { printf '\n\033[1;34m==> %s\033[0m\n' "$1"; }
 
-clibs=(
-  bpkg/bpkg
-)
-
-bkpgs=(
-)
-
-gpg_key='12F902C5C6906E5E'
-git_configs=(
-  "branch.autoSetupRebase always"
-  "color.ui auto"
-  "core.autocrlf input"
-  "core.pager cat"
-  "credential.helper osxkeychain"
-  "merge.ff false"
-  "pull.rebase true"
-  "push.default simple"
-  "rebase.autostash true"
-  "rerere.autoUpdate true"
-  "core.whitespace trailing-space,space-before-tab"
-  "apply.whitespace fix"
-  "rerere.enabled true"
-  "user.name keithkurson"
-  "user.email keith@keithkurson.net"
-  "user.signingkey ${gpg_key}"
-)
-
-vscode=(
-  WallabyJs.quokka-vscode
-  CoenraadS.bracket-pair-colorizer
-  oderwat.indent-rainbow
-  xabikos.JavaScriptSnippets
-  EQuimper.react-native-react-redux
-  wix.vscode-import-cost
-  SirTori.indenticator
-  dracula-theme.theme-dracula
-)
-
-
-fonts=(
-  font-source-code-pro
-  font-fira-code
-)
-
-omfs=(
-  jacaetevha
-  composer
-  fish-spec
-  osx
-  thefuck
-)
-
-######################################## End of app list ########################################
-set +e
-set -x
-
-if test ! $(which brew); then
-  echo "Installing Xcode ..."
+step "Xcode Command Line Tools"
+if ! xcode-select -p &>/dev/null; then
   xcode-select --install
-
-  echo "Installing Homebrew ..."
-  ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-else
-  echo "Updating Homebrew ..."
-  brew update
-  brew upgrade
+  echo "Re-run this script once the Command Line Tools install finishes."
+  exit 0
 fi
-brew doctor
-brew tap homebrew/dupes
 
-fails=()
+step "Homebrew"
+if ! command -v brew &>/dev/null; then
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
-function print_red {
-  red='\x1B[0;31m'
-  NC='\x1B[0m' # no color
-  echo -e "${red}$1${NC}"
-}
+step "Packages and apps (brew bundle)"
+brew bundle --file="$REPO_DIR/Brewfile"
+if $PERSONAL; then
+  step "Personal packages and apps"
+  brew bundle --file="$REPO_DIR/Brewfile.personal"
+fi
 
-function install {
-  cmd=$1
-  shift
-  for pkg in $@;
-  do
-    exec="$cmd $pkg"
-    echo "Executing: $exec"
-    if $exec ; then
-      echo "Installed $pkg"
-    else
-      fails+=($pkg)
-      print_red "Failed to execute: $exec"
-    fi
-  done
-}
+step "oh-my-zsh"
+if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+  RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+fi
 
-echo "Installing ruby ..."
-brew install ruby-install chruby
-ruby-install ruby
-# TODO: enable auto switch here by following instructions
-echo "ruby-2.3.1" > ~/.ruby-version
-ruby -v
+step "Spaceship prompt"
+ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
+if [[ ! -d "$ZSH_CUSTOM/themes/spaceship-prompt" ]]; then
+  git clone --depth=1 https://github.com/spaceship-prompt/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship-prompt"
+fi
+ln -sf "$ZSH_CUSTOM/themes/spaceship-prompt/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
 
-echo "Installing Java ..."
-brew cask install java
+step "Shell config"
+for file in zshrc zprofile; do
+  target="$HOME/.$file"
+  if [[ -f "$target" && ! -L "$target" ]]; then
+    mv "$target" "$target.backup"
+    echo "Backed up existing $target to $target.backup"
+  fi
+  ln -sf "$REPO_DIR/configs/$file" "$target"
+done
+# Machine-specific config and secrets go here, never in the repo
+touch "$HOME/.zshrc.local"
 
-echo "Installing packages ..."
-brew info ${brews[@]}
-install 'brew install' ${brews[@]}
+step "Runtimes (mise)"
+mise use --global node@lts bun@latest
 
-echo "Tapping casks ..."
-brew tap caskroom/fonts
-brew tap caskroom/versions
+step "Default browser"
+if ! defaultbrowser | grep -q '^\* *zen'; then
+  # macOS pops a confirmation dialog — click "Use Zen"
+  defaultbrowser zen
+fi
 
-echo "Installing software ..."
-brew cask info ${casks[@]}
-install 'brew cask install' ${casks[@]}
-
-echo "Installing secondary packages ..."
-# TODO: add info part of install or do reinstall?
-install 'pip install --upgrade' ${pips[@]}
-install 'gem install' ${gems[@]}
-install 'clib install' ${clibs[@]}
-install 'bpkg install' ${bpkgs[@]}
-install 'code --install-extension' "${vscode[@]}"
-install 'npm install --global' ${npms[@]}
-install 'brew cask install' ${fonts[@]}
-
-echo "Upgrading bash ..."
-brew install bash
-sudo bash -c "echo $(brew --prefix)/bin/bash >> /private/etc/shells"
-mv ~/.bash_profile ~/.bash_profile_backup
-mv ~/.bashrc ~/.bashrc_backup
-mv ~/.gitconfig ~/.gitconfig_backup
-cd; curl -#L https://github.com/barryclark/bashstrap/tarball/master | tar -xzv --strip-components 1 --exclude={README.md,screenshot.png}
-source ~/.bash_profile
-
-echo "Setting git defaults ..."
-for config in "${git_configs[@]}"
-do
+step "Git config"
+git config --global user.name "Keith Kurson"
+if [[ -z "$(git config --global user.email || true)" ]]; then
+  read -rp "Git email for this machine [keith@keithkurson.net]: " git_email
+  git config --global user.email "${git_email:-keith@keithkurson.net}"
+fi
+git_configs=(
+  "init.defaultBranch main"
+  "pull.rebase true"
+  "rebase.autostash true"
+  "push.default simple"
+  "push.autoSetupRemote true"
+  "rerere.enabled true"
+  "credential.helper osxkeychain"
+  "color.ui auto"
+)
+for config in "${git_configs[@]}"; do
   git config --global ${config}
 done
-gpg --keyserver hkp://pgp.mit.edu --recv ${gpg_key}
 
-echo "Installing mac CLI ..."
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/guarinogabriel/mac-cli/master/mac-cli/tools/install)"
-
-echo "Updating ..."
-pip install --upgrade setuptools
-pip install --upgrade pip
-gem update --system
-mac update
-
-echo "Cleaning up ..."
-brew cleanup
-brew cask cleanup
-brew linkapps
-
-for fail in ${fails[@]}
-do
-  echo "Failed to install: $fail"
-done
-
-echo "Run `mackup restore` after DropBox has done syncing"
-
-#!/usr/bin/env bash
-
-# Author    Maik Ellerbrock
-# Github    https://github.com/ellerbrock/
-# Company   Frapsoft
-# Twitter   @frapsoft
-# Homepage  https://frapsoft.com
-# Version   1.1.7
-# License   MIT
-
-
-# Information
-# -----------
-# Shell script to automate the installation steps provided in the tutorial
-
-# Links
-# -----
-# - Tutorial:               https://github.com/ellerbrock/tutorial-fish-shell-setup-osx/
-# - Homebrew Website:       http://brew.sh/
-# - iTerm2 Website:         https://www.iterm2.com/
-# - iTerm2 Colour Schemes:  http://iterm2colorschemes.com/
-# - Fish Shell:             https://fishshell.com/
-# - Fisherman:              http://fisherman.sh/
-# - Powerline Fonts:        https://github.com/powerline/fonts
-
-
-# Configuration
-# -------------
-HOMEBREW="https://raw.githubusercontent.com/Homebrew/install/master/install"
-COLOUR_THEMES="https://github.com/mbadolato/iTerm2-Color-Schemes/tarball/master"
-
-
-# Functions
-# ---------
-
-homebrew_install()
-{
-  echo "It seems you don't have Homebrew installed."
-  echo
-  read -p "Install Homebrew? (y/n) " -n 1 answere
-  echo
-  if [[ $answere == "y" || $answere == "Y" ]]; then
-    ruby -e "$($HOMEBREW)"
-    echo "updating Homebrew ..."
-    brew update
-    brew upgrade
-  else
-    echo "Sorry, for this automated Script we need Homebrew."
-    echo "closing ..."
-    exit 1
-  fi
-}
-
-
-ascii_font()
-{
-  echo '    _____      __            __         ____  '
-  echo '   / __(_)____/ /_     _____/ /_  ___  / / /  '
-  echo '  / /_/ / ___/ __ \   / ___/ __ \/ _ \/ / /   '
-  echo ' / __/ (__  ) / / /  (__  ) / / /  __/ / /    '
-  echo '/_/ /_/____/_/ /_/  /____/_/ /_/\___/_/_/     '
-  echo '                                              '
-  echo '        awesome fish shell setup              '
-  echo '                                              '
-  echo '                                              '
-}
-
-
-# Execute the Shell Script
-ascii_font
-
-# Test if Homebrew is installed
-test -x brew || homebrew_install
-
-read -p "Install iTerms2 ? (y/n) " -n 1 answere
-echo
-if [[ $answere == "y" || $answere == "Y" ]]; then
-  brew install caskroom/cask/brew-cask
-  brew cask install iterm2
-
-  read -p "Download iTerm2 Colour Schemes ? (y/n) " -n 1 answere
-  echo
-  if [[ $answere == "y" || $answere == "Y" ]]; then
-    curl -o $COLOUR_THEMES
-  fi
-fi
-
-
-read -p "Install Fish Shell ? (y/n) " -n 1 answere
-echo
-if [[ $answere == "y" || $answere == "Y" ]]; then
-brew install fish --HEAD
-
-    read -p "Install Fisherman ? (y/n) " -n 1 answere
-    echo
-    if [[ $answere == "y" || $answere == "Y" ]]; then
-      brew tap fisherman/tap
-      brew install --HEAD fisherman
-      echo "updating Fisher ...."
-      fisher up
-
-      read -p "Install useful Fisherman Plugins: z + bass ? (y/n) " -n 1 answere
-      echo
-      if [[ $answere == "y" || $answere == "Y" ]]; then
-        echo "Installing Fisher Plugin z + bass"
-        fisher z bass
-      fi
-
-      read -p "Install bobthefish Theme for the Fish Shell ? (y/n) " -n 1 answere
-      echo
-      if [[ $answere == "y" || $answere == "Y" ]]; then
-        brew install --with-default-names gnu-sed
-        brew cask install font-hack-nerd-font
-        omf install bobthefish
-        set -U fish_key_bindings fish_vi_key_bindings
-        set -g theme_nerd_fonts yes
-        fish_update_completions
-        # Copy our config
-        cp configs/config.fish ~/.config/fish/config.fish
-        cp configs/.fish_aliases ~/.fish_aliases
-      fi
-    fi
-fi
-
-
-read -p "Install Powerline Fonts ? (y/n) " -n 1 answere
-echo
-if [[ $answere == "y" || $answere == "Y" ]]; then
-  brew install git fontconfig
-  cp /usr/local/etc/fonts/fonts.conf.bak /usr/local/etc/fonts/fonts.conf
-
-  git clone https://github.com/powerline/fonts.git
-  ./fonts/install.sh
-fi
-
-clear
-
-echo "Setup finished"
-echo "--------------"
-echo
-echo "For further information i recommend reading the Fish Shell Documentation"
-echo
-
-read -p "Should i open the Fish Shell Documentation for you ? (y/n) " -n 1 answere
-echo
-if [[ $answere == "y" || $answere == "Y" ]]; then
-  open http://fishshell.com/docs/current/
-fi
-
-echo
-echo "closing ..."
-
-echo "Done!"
+step "Done"
+echo "Open a new terminal (or run: exec zsh) to pick everything up."
+echo "Machine-specific PATH entries and secrets go in ~/.zshrc.local."
