@@ -18,7 +18,10 @@ Safe to re-run; every step is idempotent.
 - `Brewfile` — core CLI tools, apps, fonts, and VS Code extensions
 - `Brewfile.personal` — extras for personal machines only
 - `configs/zshrc`, `configs/zprofile` — symlinked to `~/.zshrc` / `~/.zprofile`
-- `setup.sh` — orchestrates everything
+- `configs/iterm2/` — iTerm2 preferences; setup points iTerm at this folder
+- `setup.sh` — orchestrates everything, including: SSH key generation +
+  `gh auth login`, the Claude Code CLI, macOS defaults (Finder path bar,
+  list view, no network .DS_Store), and Zen as default browser
 
 Machine-specific PATH entries and secrets go in `~/.zshrc.local`, which the
 zshrc sources but git never sees.

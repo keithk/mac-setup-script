@@ -89,6 +89,33 @@ for config in "${git_configs[@]}"; do
   git config --global ${config}
 done
 
+step "SSH key"
+if [[ ! -f "$HOME/.ssh/id_ed25519" ]]; then
+  ssh-keygen -t ed25519 -C "$(git config --global user.email)" -f "$HOME/.ssh/id_ed25519"
+fi
+
+step "GitHub auth"
+if ! gh auth status &>/dev/null; then
+  # Offers to upload the SSH key to GitHub during login
+  gh auth login --git-protocol ssh
+fi
+
+step "Claude Code"
+if ! command -v claude &>/dev/null; then
+  curl -fsSL https://claude.ai/install.sh | bash
+fi
+
+step "macOS defaults"
+defaults write com.apple.finder ShowPathbar -bool true
+defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"  # list view
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+defaults write com.apple.dock tilesize -int 53
+killall Finder Dock 2>/dev/null || true
+
+step "iTerm2 settings"
+defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$REPO_DIR/configs/iterm2"
+defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
+
 step "Done"
 echo "Open a new terminal (or run: exec zsh) to pick everything up."
 echo "Machine-specific PATH entries and secrets go in ~/.zshrc.local."
