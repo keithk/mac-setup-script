@@ -87,20 +87,31 @@ if ! command -v brew &>/dev/null; then
 fi
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-step "Core packages and apps (brew bundle)"
-brew bundle --file="$REPO_DIR/Brewfile"
+# brew bundle installs in parallel by default (HOMEBREW_BUNDLE_JOBS=auto). That
+# races when a cask and its add-ons install at once — the VS Code cask gets
+# unpacked by two workers concurrently and corrupts itself. Serialize for safety.
+export HOMEBREW_BUNDLE_JOBS=1
 
-bundle_module() {  # label file
+# A pre-installed app brew didn't install (e.g. an IT- or App Store-managed one)
+# makes that one entry fail — but shouldn't abort the whole setup. Collect the
+# failures, keep going, and report them at the end.
+BUNDLE_FAILURES=()
+run_bundle() {  # label file
   step "$1"
-  brew bundle --file="$REPO_DIR/$2"
+  if ! brew bundle --file="$REPO_DIR/$2"; then
+    BUNDLE_FAILURES+=("$2")
+    printf '\033[1;33m!! %s had failures — continuing (see summary at the end).\033[0m\n' "$2"
+  fi
 }
 
-if $DEV;        then bundle_module "Dev tools"                "Brewfile.dev";        fi
-if $WEB_LOCAL;  then bundle_module "Subeta/Laravel local stack" "Brewfile.web-local"; fi
-if $BROWSERS;   then bundle_module "Browsers"                 "Brewfile.browsers";   fi
-if $CONTAINERS; then bundle_module "Containers"              "Brewfile.containers"; fi
-if $APPS;       then bundle_module "GUI apps"                 "Brewfile.apps";       fi
-if $PERSONAL;   then bundle_module "Personal apps"           "Brewfile.personal";   fi
+run_bundle "Core packages and apps" "Brewfile"
+
+if $DEV;        then run_bundle "Dev tools"                  "Brewfile.dev";        fi
+if $WEB_LOCAL;  then run_bundle "Subeta/Laravel local stack" "Brewfile.web-local";  fi
+if $BROWSERS;   then run_bundle "Browsers"                   "Brewfile.browsers";   fi
+if $CONTAINERS; then run_bundle "Containers"                 "Brewfile.containers"; fi
+if $APPS;       then run_bundle "GUI apps"                   "Brewfile.apps";       fi
+if $PERSONAL;   then run_bundle "Personal apps"             "Brewfile.personal";   fi
 
 step "oh-my-zsh"
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
@@ -185,6 +196,14 @@ killall Finder Dock 2>/dev/null || true
 step "iTerm2 settings"
 defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$REPO_DIR/configs/iterm2"
 defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
+
+if [[ ${#BUNDLE_FAILURES[@]} -gt 0 ]]; then
+  step "Heads up: some brew bundles had failures"
+  printf ' - %s\n' "${BUNDLE_FAILURES[@]}"
+  echo "Usually a pre-installed app brew won't overwrite. Inspect with:"
+  echo "  brew bundle check --file=<file>"
+  echo "To let brew adopt an identical pre-existing app: brew install --cask --adopt <name>"
+fi
 
 step "Done"
 echo "Open a new terminal (or run: exec zsh) to pick everything up."
